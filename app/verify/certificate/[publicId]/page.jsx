@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Download, ChevronLeft } from "lucide-react";
 import { cookies } from "next/headers";
+import PdfViewer from "./PdfViewer";
 
 export const metadata = {
   referrer: 'no-referrer',
@@ -136,17 +137,7 @@ export default async function CertificatePage({ params }) {
         {status === "READY" && previewUrl && downloadUrl && (
           <div className="flex flex-col items-center space-y-8">
             {/* PDF Preview */}
-            <div className="w-full aspect-[1.414/1] bg-muted border border-border shadow-2xl relative overflow-hidden flex items-center justify-center">
-              <object 
-                data={previewUrl} 
-                type="application/pdf" 
-                className="w-full h-full absolute inset-0 z-10"
-              >
-                <div className="p-8 text-center flex flex-col items-center">
-                  <p className="text-muted-foreground mb-4">Your browser does not support inline PDFs.</p>
-                </div>
-              </object>
-            </div>
+            <PdfViewer url={previewUrl} />
             
             {/* Download Action */}
             <a 
