@@ -17,7 +17,6 @@ export default function PdfViewer({ url }) {
   useEffect(() => {
     let active = true;
     
-    // Load pdf.js dynamically from CDN to bypass Next.js/Turbopack node module resolution issues
     const script = document.createElement('script');
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
     script.onload = () => {
@@ -26,7 +25,7 @@ export default function PdfViewer({ url }) {
       const pdfjs = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
       
       if (pdfjs) {
-        window.pdfjsLib = pdfjs; // normalize
+        window.pdfjsLib = pdfjs;
         pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
         setPdfjsLib(pdfjs);
       } else {
@@ -46,7 +45,6 @@ export default function PdfViewer({ url }) {
     };
   }, []);
   
-  // Load PDF
   useEffect(() => {
     if (!pdfjsLib) return;
     
@@ -76,7 +74,6 @@ export default function PdfViewer({ url }) {
     };
   }, [url, pdfjsLib]);
   
-  // Render Page
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
     
@@ -91,18 +88,28 @@ export default function PdfViewer({ url }) {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
         
+        const outputScale = window.devicePixelRatio || 1;
         const containerWidth = containerRef.current.clientWidth;
+        
+        // 32px for padding (16px each side)
         const targetWidth = containerWidth - 32; 
         
         const unscaledViewport = page.getViewport({ scale: 1 });
         const fitScale = targetWidth / unscaledViewport.width;
         
         const finalScale = fitScale * scale;
-        
         const viewport = page.getViewport({ scale: finalScale });
         
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        // STRICTLY set CSS dimensions to prevent flexbox/tailwind stretching
+        canvas.style.width = Math.floor(viewport.width) + "px";
+        canvas.style.height = Math.floor(viewport.height) + "px";
+        
+        // Set actual canvas backing store dimensions multiplied by pixel ratio for sharpness
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        
+        // Scale context to match pixel ratio
+        ctx.scale(outputScale, outputScale);
         
         const renderContext = {
           canvasContext: ctx,
@@ -115,7 +122,6 @@ export default function PdfViewer({ url }) {
       } catch (err) {
         if (err.name === 'RenderingCancelledException') return;
         console.error("PDF render error:", err);
-        // We do not set global error state for render cancellation
       }
     };
     
@@ -148,26 +154,39 @@ export default function PdfViewer({ url }) {
     <div className="flex flex-col w-full">
       <div 
         ref={containerRef}
-        className="w-full bg-muted border border-border shadow-2xl relative overflow-hidden flex flex-col items-center justify-center"
-        style={{ minHeight: '300px' }}
+        className="w-full bg-muted border border-border shadow-xl relative overflow-hidden flex flex-col items-center justify-center rounded-sm transition-all"
+        style={{ minHeight: '60vh' }}
       >
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="mt-4 text-xs font-medium text-foreground uppercase tracking-widest">Loading Preview...</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-20">
+            <div className="relative flex items-center justify-center h-20 w-20 mb-6">
+              {/* Outer spinning ring */}
+              <div className="absolute inset-0 border-t-2 border-primary/80 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+              {/* Inner opposite spinning ring */}
+              <div className="absolute inset-3 border-r-2 border-primary/40 rounded-full animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }}></div>
+              {/* Center pulsing core */}
+              <div className="h-3 w-3 bg-primary rounded-full animate-pulse"></div>
+            </div>
+            <div className="space-y-3 text-center">
+              <h3 className="text-sm font-bold tracking-[0.25em] text-foreground uppercase">Rendering</h3>
+              <p className="text-xs text-muted-foreground tracking-widest animate-pulse">SECURING CERTIFICATE...</p>
+            </div>
           </div>
         )}
         
-        <div className="p-4 w-full flex justify-center overflow-auto max-h-[80vh]">
-          <canvas ref={canvasRef} className="shadow-md bg-white"></canvas>
+        <div className="p-4 w-full flex justify-center overflow-auto max-h-[75vh]">
+          {/* Wrapper to isolate canvas from flex behaviors */}
+          <div className="relative shadow-2xl bg-white flex-shrink-0" style={{ display: 'inline-block' }}>
+            <canvas ref={canvasRef} className="block"></canvas>
+          </div>
         </div>
       </div>
       
-      <div className="flex justify-center items-center gap-2 mt-4">
+      <div className="flex justify-center items-center gap-3 mt-6">
         <button 
           onClick={handleZoomOut}
           disabled={scale <= 0.5 || isLoading || !pdfDoc}
-          className="p-2 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors"
+          className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
           aria-label="Zoom out"
         >
           <ZoomOut className="w-4 h-4" />
@@ -175,7 +194,7 @@ export default function PdfViewer({ url }) {
         <button 
           onClick={handleFit}
           disabled={scale === 1.0 || isLoading || !pdfDoc}
-          className="p-2 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors text-xs font-semibold uppercase tracking-widest"
+          className="px-6 py-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors text-xs font-bold uppercase tracking-[0.2em] shadow-sm"
           aria-label="Fit width"
         >
           FIT
@@ -183,7 +202,7 @@ export default function PdfViewer({ url }) {
         <button 
           onClick={handleZoomIn}
           disabled={scale >= 3.0 || isLoading || !pdfDoc}
-          className="p-2 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors"
+          className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
           aria-label="Zoom in"
         >
           <ZoomIn className="w-4 h-4" />
