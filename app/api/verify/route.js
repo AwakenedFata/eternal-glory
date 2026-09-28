@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import crypto from "crypto";
+import { getClientIp } from "@/lib/geolocation/get-client-ip";
+import { geolocateIP } from "@/lib/geolocation/service";
 
 export async function POST(req) {
   try {
@@ -32,15 +35,52 @@ export async function POST(req) {
       return NextResponse.json({ error: "Admin API URL not configured" }, { status: 500 });
     }
 
-    // Forward to Admin API
+    // 1. Geolocate on the trusted Public Server boundary
+    const ip = getClientIp(req);
+    const location = await geolocateIP(ip);
+    
+    const payload = {
+      code: body.code,
+      claimToken,
+      verificationContext: {
+        location: location || {
+          displayName: "Unknown Location",
+          source: "NONE",
+          status: "UNRESOLVED",
+          reason: "NO_RECORD"
+        }
+      }
+    };
+    
+    const payloadString = JSON.stringify(payload);
+
+    // 2. Sign the request
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    if (!secret) {
+      console.error("INTERNAL_SERVICE_SECRET is missing");
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+
+    const timestamp = Date.now().toString();
+    const nonce = crypto.randomBytes(16).toString('hex');
+    const method = "POST";
+    const path = "/api/public/verify"; // Target path on Admin
+    const bodyHash = crypto.createHash('sha256').update(payloadString).digest('hex');
+    
+    const canonicalString = `${method}\n${path}\n${timestamp}\n${nonce}\n${bodyHash}`;
+    const signature = crypto.createHmac('sha256', secret).update(canonicalString).digest('hex');
+
+    // 3. Forward to Admin API with Authentication
     const res = await fetch(`${adminApiUrl}/verify`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "X-Forwarded-For": req.headers.get("x-forwarded-for") || "",
+        "X-Internal-Timestamp": timestamp,
+        "X-Internal-Nonce": nonce,
+        "X-Internal-Signature": signature,
         "User-Agent": req.headers.get("user-agent") || ""
       },
-      body: JSON.stringify({ code: body.code, claimToken }),
+      body: payloadString,
     });
 
     const data = await res.json();
