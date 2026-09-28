@@ -22,15 +22,19 @@ export default function PdfViewer({ url }) {
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
     script.onload = () => {
       if (!active) return;
-      if (window.pdfjsLib) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-        setPdfjsLib(window.pdfjsLib);
+      
+      const pdfjs = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+      
+      if (pdfjs) {
+        window.pdfjsLib = pdfjs; // normalize
+        pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        setPdfjsLib(pdfjs);
       } else {
-        if (active) setError("Unable to preview certificate.");
+        if (active) setError("CDN Load Error: pdfjsLib object is undefined on window.");
       }
     };
     script.onerror = () => {
-      if (active) setError("Unable to preview certificate.");
+      if (active) setError("CDN Load Error: Failed to load pdf.min.js script.");
     };
     document.body.appendChild(script);
 
@@ -60,7 +64,7 @@ export default function PdfViewer({ url }) {
       } catch (err) {
         console.error("PDF load error:", err);
         if (!active) return;
-        setError("Unable to preview certificate.");
+        setError("PDF Load Error: " + (err.message || String(err)));
         setIsLoading(false);
       }
     };
@@ -111,6 +115,7 @@ export default function PdfViewer({ url }) {
       } catch (err) {
         if (err.name === 'RenderingCancelledException') return;
         console.error("PDF render error:", err);
+        // We do not set global error state for render cancellation
       }
     };
     
@@ -132,6 +137,9 @@ export default function PdfViewer({ url }) {
     return (
       <div className="flex flex-col items-center justify-center p-20 border border-border bg-muted/20 w-full aspect-[1.414/1]">
         <p className="text-sm font-medium text-destructive">{error}</p>
+        <p className="text-xs text-muted-foreground mt-4 text-center max-w-sm">
+          If this says "PDF Load Error: Failed to fetch", it is likely a CORS issue on your Object Storage bucket. Ensure your bucket is configured to allow GET requests from this domain.
+        </p>
       </div>
     );
   }
