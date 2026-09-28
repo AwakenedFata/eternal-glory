@@ -14,7 +14,7 @@ export async function POST(req) {
     if (process.env.NODE_ENV === "production" && origin) {
       const originHost = new URL(origin).host;
       if (originHost !== host) {
-        return NextResponse.json({ error: "Invalid Origin" }, { status: 403 });
+        return NextResponse.json({ error: "Invalid Origin", details: `Origin ${originHost} !== ${host}` }, { status: 403 });
       }
     }
 
@@ -36,8 +36,13 @@ export async function POST(req) {
     }
 
     // 1. Geolocate on the trusted Public Server boundary
-    const ip = getClientIp(req);
-    const location = await geolocateIP(ip);
+    let ip, location;
+    try {
+      ip = getClientIp(req);
+      location = await geolocateIP(ip);
+    } catch (e) {
+      throw new Error("Geolocation failed: " + e.message);
+    }
     
     const payload = {
       code: body.code,
@@ -57,8 +62,7 @@ export async function POST(req) {
     // 2. Sign the request
     const secret = process.env.INTERNAL_SERVICE_SECRET;
     if (!secret) {
-      console.error("INTERNAL_SERVICE_SECRET is missing");
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      return NextResponse.json({ error: "INTERNAL_SERVICE_SECRET is missing" }, { status: 500 });
     }
 
     const timestamp = Date.now().toString();
@@ -71,19 +75,38 @@ export async function POST(req) {
     const signature = crypto.createHmac('sha256', secret).update(canonicalString).digest('hex');
 
     // 3. Forward to Admin API with Authentication
-    const res = await fetch(`${adminApiUrl}/verify`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "X-Internal-Timestamp": timestamp,
-        "X-Internal-Nonce": nonce,
-        "X-Internal-Signature": signature,
-        "User-Agent": req.headers.get("user-agent") || ""
-      },
-      body: payloadString,
-    });
+    let res;
+    try {
+      res = await fetch(`${adminApiUrl}/verify`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Internal-Timestamp": timestamp,
+          "X-Internal-Nonce": nonce,
+          "X-Internal-Signature": signature,
+          "User-Agent": req.headers.get("user-agent") || ""
+        },
+        body: payloadString,
+      });
+    } catch (e) {
+      throw new Error(`Fetch to Admin API failed: ${e.message}`);
+    }
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`Admin API returned invalid JSON. Status: ${res.status}. Body: ${text.substring(0, 200)}`);
+    }
+
+    // If Admin API explicitly returns an error status without catching it correctly
+    if (!res.ok) {
+      // Return the error from Admin API but keep it as 200/400 to let frontend parse it
+      // Wait, we should forward the status.
+      return NextResponse.json(data, { status: res.status });
+    }
+
     const response = NextResponse.json(data);
 
     // If a new claim token is provided, update the cookie
@@ -109,6 +132,6 @@ export async function POST(req) {
     return response;
   } catch (error) {
     console.error("Verification BFF error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error", details: error?.message || String(error) }, { status: 500 });
   }
 }

@@ -53,7 +53,7 @@ export default function VerifySection() {
         setNotice(data.message);
         setStatus("ERROR");
       } else {
-        setNotice(data.message || "Serial number not found.");
+        setNotice(data.details || data.error || data.message || "Serial number not found.");
         setStatus("INVALID");
       }
       
