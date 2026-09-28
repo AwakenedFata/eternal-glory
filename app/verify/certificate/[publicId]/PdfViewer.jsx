@@ -8,12 +8,34 @@ export default function PdfViewer({ url }) {
   const containerRef = useRef(null);
   
   const [pdfjsLib, setPdfjsLib] = useState(null);
+  const [pdfBuffer, setPdfBuffer] = useState(null);
   const [pdfDoc, setPdfDoc] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // We keep the spinner until the FIRST render is fully completed.
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState(null);
 
+  // 1. Parallel Fetch: Download the PDF bytes immediately 
+  useEffect(() => {
+    let active = true;
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.arrayBuffer();
+      })
+      .then((buffer) => {
+        if (active) setPdfBuffer(new Uint8Array(buffer));
+      })
+      .catch((err) => {
+        console.error("PDF Fetch Error:", err);
+        if (active) setError("Failed to download certificate data.");
+      });
+    return () => { active = false; };
+  }, [url]);
+
+  // 2. Parallel Fetch: Load PDF.js from CDN
   useEffect(() => {
     let active = true;
     
@@ -45,25 +67,23 @@ export default function PdfViewer({ url }) {
     };
   }, []);
   
+  // 3. Parse PDF Document once both CDN and Buffer are ready
   useEffect(() => {
-    if (!pdfjsLib) return;
+    if (!pdfjsLib || !pdfBuffer) return;
     
     let active = true;
     
     const loadPdf = async () => {
-      setIsLoading(true);
       setError(null);
       try {
-        const loadingTask = pdfjsLib.getDocument(url);
+        const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
         const pdf = await loadingTask.promise;
         if (!active) return;
         setPdfDoc(pdf);
-        setIsLoading(false);
       } catch (err) {
-        console.error("PDF load error:", err);
+        console.error("PDF parse error:", err);
         if (!active) return;
-        setError("PDF Load Error: " + (err.message || String(err)));
-        setIsLoading(false);
+        setError("PDF Parse Error: " + (err.message || String(err)));
       }
     };
     
@@ -72,8 +92,9 @@ export default function PdfViewer({ url }) {
     return () => {
       active = false;
     };
-  }, [url, pdfjsLib]);
+  }, [pdfBuffer, pdfjsLib]);
   
+  // 4. Render the Page to Canvas
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
     
@@ -119,6 +140,9 @@ export default function PdfViewer({ url }) {
         renderTask = page.render(renderContext);
         await renderTask.promise;
         
+        if (active) {
+          setIsInitialLoad(false); // Hide spinner ONLY AFTER pixels are on the screen!
+        }
       } catch (err) {
         if (err.name === 'RenderingCancelledException') return;
         console.error("PDF render error:", err);
@@ -157,7 +181,7 @@ export default function PdfViewer({ url }) {
         className="w-full bg-muted border border-border shadow-xl relative overflow-hidden flex flex-col items-center justify-center rounded-sm transition-all"
         style={{ minHeight: '60vh' }}
       >
-        {isLoading && (
+        {isInitialLoad && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-20">
             <div className="relative flex items-center justify-center h-20 w-20 mb-6">
               {/* Outer spinning ring */}
@@ -174,7 +198,7 @@ export default function PdfViewer({ url }) {
           </div>
         )}
         
-        <div className="p-4 w-full flex justify-center overflow-auto max-h-[75vh]">
+        <div className={`p-4 w-full flex justify-center overflow-auto max-h-[75vh] transition-opacity duration-500 ${isInitialLoad ? 'opacity-0' : 'opacity-100'}`}>
           {/* Wrapper to isolate canvas from flex behaviors */}
           <div className="relative shadow-2xl bg-white flex-shrink-0" style={{ display: 'inline-block' }}>
             <canvas ref={canvasRef} className="block"></canvas>
@@ -185,7 +209,7 @@ export default function PdfViewer({ url }) {
       <div className="flex justify-center items-center gap-3 mt-6">
         <button 
           onClick={handleZoomOut}
-          disabled={scale <= 0.5 || isLoading || !pdfDoc}
+          disabled={scale <= 0.5 || isInitialLoad || !pdfDoc}
           className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
           aria-label="Zoom out"
         >
@@ -193,7 +217,7 @@ export default function PdfViewer({ url }) {
         </button>
         <button 
           onClick={handleFit}
-          disabled={scale === 1.0 || isLoading || !pdfDoc}
+          disabled={scale === 1.0 || isInitialLoad || !pdfDoc}
           className="px-6 py-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors text-xs font-bold uppercase tracking-[0.2em] shadow-sm"
           aria-label="Fit width"
         >
@@ -201,7 +225,7 @@ export default function PdfViewer({ url }) {
         </button>
         <button 
           onClick={handleZoomIn}
-          disabled={scale >= 3.0 || isLoading || !pdfDoc}
+          disabled={scale >= 3.0 || isInitialLoad || !pdfDoc}
           className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
           aria-label="Zoom in"
         >
