@@ -6,6 +6,8 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 export default function PdfViewer({ url }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const timelineRef = useRef({ start: Date.now() });
+  const fetchStartedRef = useRef(false);
   
   const [pdfjsLib, setPdfjsLib] = useState(null);
   const [pdfBuffer, setPdfBuffer] = useState(null);
@@ -17,15 +19,30 @@ export default function PdfViewer({ url }) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState(null);
 
+  const logTimeline = (event) => {
+    const now = Date.now();
+    const elapsed = now - timelineRef.current.start;
+    timelineRef.current[event] = now;
+    console.log(`[Performance] ${event}: ${elapsed}ms`);
+  };
+
   // 1. Parallel Fetch: Download the PDF bytes immediately 
   useEffect(() => {
     let active = true;
+    if (!url) return;
+    
+    // Strict mode deduplication
+    if (fetchStartedRef.current) return;
+    fetchStartedRef.current = true;
+    
+    console.log(`[Performance] Fetching PDF...`);
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.arrayBuffer();
       })
       .then((buffer) => {
+        logTimeline('pdfDownloaded');
         if (active) setPdfBuffer(new Uint8Array(buffer));
       })
       .catch((err) => {
@@ -38,6 +55,11 @@ export default function PdfViewer({ url }) {
   // 2. Parallel Fetch: Load PDF.js from CDN
   useEffect(() => {
     let active = true;
+    if (window.pdfjsLib) {
+      logTimeline('scriptLoaded (cached)');
+      setPdfjsLib(window.pdfjsLib);
+      return;
+    }
     
     const script = document.createElement('script');
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
@@ -47,6 +69,7 @@ export default function PdfViewer({ url }) {
       const pdfjs = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
       
       if (pdfjs) {
+        logTimeline('scriptLoaded');
         window.pdfjsLib = pdfjs;
         pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
         setPdfjsLib(pdfjs);
@@ -61,9 +84,6 @@ export default function PdfViewer({ url }) {
 
     return () => { 
       active = false; 
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
     };
   }, []);
   
@@ -76,8 +96,10 @@ export default function PdfViewer({ url }) {
     const loadPdf = async () => {
       setError(null);
       try {
+        console.log(`[Performance] Parsing PDF...`);
         const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
         const pdf = await loadingTask.promise;
+        logTimeline('workerReady');
         if (!active) return;
         setPdfDoc(pdf);
       } catch (err) {
@@ -103,13 +125,16 @@ export default function PdfViewer({ url }) {
     
     const renderPage = async () => {
       try {
+        console.log(`[Performance] Rendering page...`);
         const page = await pdfDoc.getPage(pageNumber);
         if (!active) return;
         
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
         
-        const outputScale = window.devicePixelRatio || 1;
+        // Clamp DPR to max 2 to prevent memory crashes on high-res mobile devices
+        const outputScale = Math.min(window.devicePixelRatio || 1, 2);
+        
         const containerWidth = containerRef.current.clientWidth;
         
         // 32px for padding (16px each side)
@@ -141,6 +166,7 @@ export default function PdfViewer({ url }) {
         await renderTask.promise;
         
         if (active) {
+          logTimeline('firstPagePainted');
           setIsInitialLoad(false); // Hide spinner ONLY AFTER pixels are on the screen!
         }
       } catch (err) {
@@ -192,7 +218,7 @@ export default function PdfViewer({ url }) {
               <div className="h-3 w-3 bg-primary rounded-full animate-pulse"></div>
             </div>
             <div className="space-y-3 text-center">
-              <h3 className="text-sm font-bold tracking-[0.25em] text-foreground uppercase">Rendering</h3>
+              <h3 className="text-sm font-bold tracking-[0.25em] text-foreground uppercase">Loading</h3>
               <p className="text-xs text-muted-foreground tracking-widest animate-pulse">SECURING CERTIFICATE...</p>
             </div>
           </div>
@@ -206,31 +232,33 @@ export default function PdfViewer({ url }) {
         </div>
       </div>
       
-      <div className="flex justify-center items-center gap-3 mt-6">
-        <button 
-          onClick={handleZoomOut}
-          disabled={scale <= 0.5 || isInitialLoad || !pdfDoc}
-          className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
-          aria-label="Zoom out"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-        <button 
-          onClick={handleFit}
-          disabled={scale === 1.0 || isInitialLoad || !pdfDoc}
-          className="px-6 py-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors text-xs font-bold uppercase tracking-[0.2em] shadow-sm"
-          aria-label="Fit width"
-        >
-          FIT
-        </button>
-        <button 
-          onClick={handleZoomIn}
-          disabled={scale >= 3.0 || isInitialLoad || !pdfDoc}
-          className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
-          aria-label="Zoom in"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
+      <div className="flex flex-col items-center mt-6 gap-2">
+        <div className="flex justify-center items-center gap-3">
+          <button 
+            onClick={handleZoomOut}
+            disabled={scale <= 0.5 || isInitialLoad || !pdfDoc}
+            className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={handleFit}
+            disabled={scale === 1.0 || isInitialLoad || !pdfDoc}
+            className="px-6 py-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors text-xs font-bold uppercase tracking-[0.2em] shadow-sm"
+            aria-label="Fit width"
+          >
+            FIT
+          </button>
+          <button 
+            onClick={handleZoomIn}
+            disabled={scale >= 3.0 || isInitialLoad || !pdfDoc}
+            className="p-3 border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors shadow-sm"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

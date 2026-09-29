@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { cookies } from "next/headers";
-import PdfViewer from "./PdfViewer";
+import PollingStatus from "./PollingStatus";
 
 export const metadata = {
   referrer: 'no-referrer',
@@ -44,10 +44,8 @@ export default async function CertificatePage({ params }) {
       for (const key in claims) {
         if (claims[key].publicId === publicId) {
           token = claims[key].token;
-          // Note: for older cookies where token was stored directly as a string, this might fail,
-          // but we just reset the cookie structure so it's fine for new claims.
           if (typeof claims[key] === 'string') {
-            token = claims[key]; // Fallback for transition
+            token = claims[key];
           }
           break;
         }
@@ -85,7 +83,7 @@ export default async function CertificatePage({ params }) {
     notFound();
   }
 
-  const { status, downloadUrl, previewUrl } = data.certificate;
+  const { status } = data.certificate;
 
   return (
     <main className="min-h-screen bg-background pb-20 pt-32">
@@ -106,49 +104,15 @@ export default async function CertificatePage({ params }) {
           </p>
         </div>
 
-        {status === "PROCESSING" && (
-          <div className="flex flex-col items-center justify-center p-20 border border-border bg-muted/20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="mt-6 text-lg font-medium text-foreground">Generating your certificate...</p>
-            <p className="mt-2 text-sm text-muted-foreground text-center">
-              Please wait a moment. This page will not auto-refresh, please refresh manually.
-            </p>
-          </div>
-        )}
-
-        {status === "FAILED" && (
-          <div className="flex flex-col items-center justify-center p-20 border border-border bg-destructive/10">
-            <p className="text-lg font-medium text-destructive">Certificate generation failed.</p>
-            <p className="mt-2 text-sm text-muted-foreground text-center">
-              Your product is verified, but we couldn't generate the PDF. Please contact support.
-            </p>
-          </div>
-        )}
-
-        {status === "REVOKED" && (
+        {status === "REVOKED" ? (
           <div className="flex flex-col items-center justify-center p-20 border border-border bg-destructive/10">
             <p className="text-lg font-bold text-destructive uppercase tracking-widest">Certificate Revoked</p>
             <p className="mt-2 text-sm text-muted-foreground text-center max-w-md">
               This certificate is no longer valid or has been revoked by Eternal Glory.
             </p>
           </div>
-        )}
-
-        {status === "READY" && previewUrl && downloadUrl && (
-          <div className="flex flex-col items-center space-y-8">
-            {/* PDF Preview */}
-            <PdfViewer url={previewUrl} />
-            
-            {/* Download Action */}
-            <a 
-              href={downloadUrl}
-              download={`Eternal-Glory-Certificate-${publicId}.pdf`}
-              className="inline-flex h-14 w-full max-w-sm items-center justify-center bg-primary px-8 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground transition-opacity hover:opacity-85"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download Certificate
-            </a>
-          </div>
+        ) : (
+          <PollingStatus publicId={publicId} initialStatus={status} token={token} />
         )}
       </div>
     </main>
