@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import hangTagImage from "@/public/assets/hangtag.jpg";
 
@@ -11,6 +11,40 @@ export default function VerifySection() {
   const [status, setStatus] = useState("IDLE");
   const [notice, setNotice] = useState(null);
   const [certificateData, setCertificateData] = useState(null);
+
+  useEffect(() => {
+    let interval;
+    if (status === "CERTIFICATE_PROCESSING" && certificateData?.publicId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/verify/certificate/${certificateData.publicId}/status`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.certificate?.status === "READY") {
+              setStatus("VERIFIED");
+              setCertificateData(prev => ({
+                ...prev,
+                status: "READY",
+                previewUrl: data.certificate.previewUrl,
+                downloadUrl: data.certificate.downloadUrl
+              }));
+              clearInterval(interval);
+            } else if (data?.certificate?.status === "FAILED") {
+               setStatus("ERROR");
+               setNotice("Failed to generate certificate. Please contact support.");
+               clearInterval(interval);
+            }
+          }
+        } catch (e) {
+          console.error("Polling error:", e);
+        }
+      }, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [status, certificateData?.publicId]);
+
 
   const handleVerify = async (e) => {
     e.preventDefault();
