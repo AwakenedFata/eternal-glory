@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import hangTagImage from "@/public/assets/hangtag.jpg";
 
 // STATES: IDLE, VERIFYING, INVALID, VERIFIED, ALREADY_VERIFIED, CERTIFICATE_PROCESSING, ERROR
 
 export default function VerifySection() {
+  const router = useRouter();
   const [serial, setSerial] = useState("");
   const [status, setStatus] = useState("IDLE");
   const [notice, setNotice] = useState(null);
