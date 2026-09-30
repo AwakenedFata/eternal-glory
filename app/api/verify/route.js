@@ -110,12 +110,26 @@ export async function POST(req) {
 
     const response = NextResponse.json(data);
 
-    // If a new claim token is provided, update the cookie
+        // If a new claim token is provided, update the cookie
     if (data.certificate?.claimToken) {
       claims[body.code] = {
         token: data.certificate.claimToken,
-        publicId: data.certificate.publicId
+        publicId: data.certificate.publicId,
+        timestamp: Date.now()
       };
+      
+      // Limit to 5 most recent claims to prevent 4096-byte cookie overflow
+      const claimKeys = Object.keys(claims);
+      if (claimKeys.length > 5) {
+        const sortedKeys = claimKeys.sort((a, b) => {
+          return (claims[b].timestamp || 0) - (claims[a].timestamp || 0);
+        });
+        const newClaims = {};
+        for (let i = 0; i < 5; i++) {
+          newClaims[sortedKeys[i]] = claims[sortedKeys[i]];
+        }
+        claims = newClaims;
+      }
       
       response.cookies.set({
         name: "eg_claims",

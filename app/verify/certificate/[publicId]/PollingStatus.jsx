@@ -41,14 +41,11 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
       setAttempts(a => a + 1);
     };
 
-    // Polling with backoff: 2s, 3s, 4s, 5s, 5s...
-    let delay = 5000;
-    if (attempts === 0) delay = 2000;
-    else if (attempts === 1) delay = 3000;
-    else if (attempts === 2) delay = 4000;
+    // FAST POLLING: 1s continuously for snappy UX
+    let delay = 1000;
     
-    // Stop polling after 20 attempts (~1.5 minutes)
-    if (attempts < 20) {
+    // Stop polling after 30 attempts (30 seconds)
+    if (attempts < 30) {
       timeoutRef.current = setTimeout(poll, delay);
     } else {
       setStatus("FAILED");

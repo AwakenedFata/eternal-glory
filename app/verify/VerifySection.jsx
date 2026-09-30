@@ -68,12 +68,15 @@ export default function VerifySection() {
 
       if (data.result === "VERIFIED") {
         setNotice(data.message);
-        if (data.certificate?.status === "PROCESSING") {
-          setStatus("CERTIFICATE_PROCESSING");
+        setCertificateData(data.certificate);
+        
+        // IMMEDIATE REDIRECT for faster perceived performance
+        if (data.certificate?.status === "PROCESSING" || data.certificate?.status === "READY") {
+          router.push(`/verify/certificate/${data.certificate.publicId}`);
+          return;
         } else {
           setStatus("VERIFIED");
         }
-        setCertificateData(data.certificate);
       } else if (data.result === "ALREADY_VERIFIED") {
         if (data.certificateAccess) {
           setNotice(data.message);
