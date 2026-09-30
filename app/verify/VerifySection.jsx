@@ -14,38 +14,7 @@ export default function VerifySection() {
   const [notice, setNotice] = useState(null);
   const [certificateData, setCertificateData] = useState(null);
 
-  useEffect(() => {
-    let interval;
-    if (status === "CERTIFICATE_PROCESSING" && certificateData?.publicId) {
-      interval = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/verify/certificate/${certificateData.publicId}/status`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data?.certificate?.status === "READY") {
-              setStatus("VERIFIED");
-              setCertificateData(prev => ({
-                ...prev,
-                status: "READY",
-                previewUrl: data.certificate.previewUrl,
-                downloadUrl: data.certificate.downloadUrl
-              }));
-              clearInterval(interval);
-            } else if (data?.certificate?.status === "FAILED") {
-               setStatus("ERROR");
-               setNotice("Failed to generate certificate. Please contact support.");
-               clearInterval(interval);
-            }
-          }
-        } catch (e) {
-          console.error("Polling error:", e);
-        }
-      }, 3000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [status, certificateData?.publicId]);
+  
 
 
   const handleVerify = async (e) => {
@@ -82,8 +51,13 @@ export default function VerifySection() {
       } else if (data.result === "ALREADY_VERIFIED") {
         if (data.certificateAccess) {
           setNotice(data.message);
-          setStatus("ALREADY_VERIFIED");
           setCertificateData(data.certificate);
+          // IMMEDIATE REDIRECT for already verified too
+          if (data.certificate?.publicId) {
+             router.push(`/verify/certificate/${data.certificate.publicId}`);
+             return;
+          }
+          setStatus("ALREADY_VERIFIED");
         } else {
           setNotice("This product is authentic, but the certificate has already been claimed.");
           setStatus("ALREADY_CLAIMED");
