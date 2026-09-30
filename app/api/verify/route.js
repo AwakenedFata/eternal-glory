@@ -28,7 +28,8 @@ export async function POST(req) {
       claims = {};
     }
     
-    const claimToken = claims[body.code];
+    const claimObj = claims[body.code];
+    const claimToken = claimObj?.token || (typeof claimObj === 'string' ? claimObj : null);
 
     const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL;
     if (!adminApiUrl) {
