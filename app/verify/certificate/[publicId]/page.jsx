@@ -83,7 +83,7 @@ export default async function CertificatePage({ params }) {
     notFound();
   }
 
-  const { status } = data.certificate;
+  const { status, previewUrl, downloadUrl } = data.certificate;
 
   return (
     <main className="min-h-screen bg-background pb-20 pt-32">
@@ -112,7 +112,7 @@ export default async function CertificatePage({ params }) {
             </p>
           </div>
         ) : (
-          <PollingStatus publicId={publicId} initialStatus={status} token={token} />
+          <PollingStatus publicId={publicId} initialStatus={status} initialPreviewUrl={previewUrl} initialDownloadUrl={downloadUrl} token={token} />
         )}
       </div>
     </main>

@@ -49,7 +49,7 @@ export default function PdfViewer({ url }) {
         console.error("PDF Fetch Error:", err);
         if (active) setError("Failed to download certificate data.");
       });
-    return () => { active = false; };
+    return () => { active = false; fetchStartedRef.current = false; };
   }, [url]);
 
   // 2. Parallel Fetch: Load PDF.js from CDN

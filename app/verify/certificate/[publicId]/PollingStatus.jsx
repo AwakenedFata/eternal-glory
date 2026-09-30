@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import PdfViewer from "./PdfViewer";
 import { Download } from "lucide-react";
 
-export default function PollingStatus({ publicId, initialStatus, token }) {
+export default function PollingStatus({ publicId, initialStatus, initialPreviewUrl, initialDownloadUrl, token }) {
   const [status, setStatus] = useState(initialStatus);
-  const [urls, setUrls] = useState({ previewUrl: null, downloadUrl: null });
+  const [urls, setUrls] = useState({ previewUrl: initialPreviewUrl || null, downloadUrl: initialDownloadUrl || null });
   const [attempts, setAttempts] = useState(0);
 
   const timeoutRef = useRef(null);
