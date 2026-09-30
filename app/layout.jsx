@@ -1,4 +1,5 @@
 import { Anton, Manrope } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const anton = Anton({
@@ -27,6 +28,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${anton.variable} ${manrope.variable}`}>
+      
+      <head>
+        <Script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" strategy="beforeInteractive" />
+      </head>
       <body>{children}</body>
     </html>
   );

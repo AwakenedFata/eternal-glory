@@ -16,32 +16,22 @@ export default function PdfViewer({ url }) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState(null);
 
-  // 1. Parallel Fetch: Load PDF.js from CDN immediately on mount (even if url is null)
+  // 1. Wait for global pdfjsLib to be available (loaded by next/script in layout)
   useEffect(() => {
     let active = true;
-    if (window.pdfjsLib) {
-      setPdfjsLib(window.pdfjsLib);
-      return;
-    }
     
-    const script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    script.onload = () => {
-      if (!active) return;
+    const checkPdfJs = () => {
       const pdfjs = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
       if (pdfjs) {
-        window.pdfjsLib = pdfjs;
         pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-        setPdfjsLib(pdfjs);
+        if (active) setPdfjsLib(pdfjs);
       } else {
-        if (active) setError("CDN Load Error: pdfjsLib object is undefined on window.");
+        // Retry if not yet loaded
+        if (active) setTimeout(checkPdfJs, 200);
       }
     };
-    script.onerror = () => {
-      if (active) setError("CDN Load Error: Failed to load pdf.min.js script.");
-    };
-    document.body.appendChild(script);
-
+    
+    checkPdfJs();
     return () => { active = false; };
   }, []);
 
@@ -50,7 +40,8 @@ export default function PdfViewer({ url }) {
     let active = true;
     if (!url) return;
     
-    fetch(url)
+    // Add aggressive caching header for fetch
+    fetch(url, { cache: 'force-cache' })
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.arrayBuffer();
@@ -101,8 +92,8 @@ export default function PdfViewer({ url }) {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
         const outputScale = Math.min(window.devicePixelRatio || 1, 2);
-        const containerWidth = containerRef.current.clientWidth;
-        const targetWidth = containerWidth - 32; 
+        const containerWidth = containerRef.current.clientWidth || 800; // Fallback width
+        const targetWidth = Math.max(containerWidth - 32, 300); // Prevent negative/zero
         
         const unscaledViewport = page.getViewport({ scale: 1 });
         const fitScale = targetWidth / unscaledViewport.width;
@@ -130,9 +121,12 @@ export default function PdfViewer({ url }) {
       }
     };
     
-    renderPage();
+    // Slight delay to ensure DOM layout is settled before reading clientWidth
+    const timer = setTimeout(renderPage, 50);
+    
     return () => {
       active = false;
+      clearTimeout(timer);
       if (renderTask) renderTask.cancel();
     };
   }, [pdfDoc, pageNumber, scale]);
