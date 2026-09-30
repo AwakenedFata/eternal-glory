@@ -6,8 +6,6 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 export default function PdfViewer({ url }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-  const timelineRef = useRef({ start: Date.now() });
-  const fetchStartedRef = useRef(false);
   
   const [pdfjsLib, setPdfjsLib] = useState(null);
   const [pdfBuffer, setPdfBuffer] = useState(null);
@@ -18,99 +16,78 @@ export default function PdfViewer({ url }) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    console.log("[VIEWER] PAGE_MOUNT");
-    if (url) {
-      console.log("[VIEWER] PREVIEW_URL_RECEIVED:", url.substring(0, 50) + "...");
-    }
-  }, [url]);
-
-  // 1. Parallel Fetch: Download the PDF bytes immediately 
-  useEffect(() => {
-    let active = true;
-    if (!url) return;
-    
-    if (fetchStartedRef.current) return;
-    fetchStartedRef.current = true;
-    
-    console.log("[VIEWER] PDF_FETCH_START");
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.arrayBuffer();
-      })
-      .then((buffer) => {
-        console.log("[VIEWER] PDF_FETCH_SUCCESS");
-        if (active) setPdfBuffer(new Uint8Array(buffer));
-      })
-      .catch((err) => {
-        console.error("[VIEWER] ERROR:", err);
-        if (active) setError("Failed to download certificate data: " + err.message);
-      });
-    return () => { 
-      active = false; 
-      fetchStartedRef.current = false; 
-    };
-  }, [url]);
-
-  // 2. Parallel Fetch: Load PDF.js from CDN
+  // 1. Parallel Fetch: Load PDF.js from CDN immediately on mount (even if url is null)
   useEffect(() => {
     let active = true;
     if (window.pdfjsLib) {
-      console.log("[VIEWER] PDFJS_LOAD_SUCCESS (cached)");
       setPdfjsLib(window.pdfjsLib);
       return;
     }
     
-    console.log("[VIEWER] PDFJS_LOAD_START");
     const script = document.createElement('script');
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
     script.onload = () => {
       if (!active) return;
       const pdfjs = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
       if (pdfjs) {
-        console.log("[VIEWER] PDFJS_LOAD_SUCCESS");
         window.pdfjsLib = pdfjs;
         pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
         setPdfjsLib(pdfjs);
       } else {
-        console.error("[VIEWER] ERROR: pdfjsLib object is undefined");
         if (active) setError("CDN Load Error: pdfjsLib object is undefined on window.");
       }
     };
     script.onerror = () => {
-      console.error("[VIEWER] ERROR: Failed to load pdf.min.js script");
       if (active) setError("CDN Load Error: Failed to load pdf.min.js script.");
     };
     document.body.appendChild(script);
 
     return () => { active = false; };
   }, []);
+
+  // 2. Fetch PDF bytes when URL becomes available
+  useEffect(() => {
+    let active = true;
+    if (!url) return;
+    
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.arrayBuffer();
+      })
+      .then((buffer) => {
+        if (active) setPdfBuffer(new Uint8Array(buffer));
+      })
+      .catch((err) => {
+        console.error("[VIEWER] ERROR:", err);
+        if (active) setError("Failed to download certificate data: " + err.message);
+      });
+      
+    return () => { active = false; };
+  }, [url]);
   
-  // 3. Parse PDF Document
+  // 3. Parse PDF Document when buffer and pdfjsLib are ready
   useEffect(() => {
     if (!pdfjsLib || !pdfBuffer) return;
     let active = true;
+    
     const loadPdf = async () => {
       setError(null);
       try {
-        console.log("[VIEWER] DOCUMENT_LOAD_START");
         const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
         const pdf = await loadingTask.promise;
-        console.log("[VIEWER] DOCUMENT_LOAD_SUCCESS");
         if (!active) return;
         setPdfDoc(pdf);
       } catch (err) {
         console.error("[VIEWER] ERROR:", err);
-        if (!active) return;
-        setError("PDF Parse Error: " + (err.message || String(err)));
+        if (active) setError("PDF Parse Error: " + (err.message || String(err)));
       }
     };
     loadPdf();
     return () => { active = false; };
   }, [pdfBuffer, pdfjsLib]);
   
-  // 4. Render the Page
+  // 4. Render the Page when pdfDoc is ready
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
     let renderTask = null;
@@ -118,7 +95,6 @@ export default function PdfViewer({ url }) {
     
     const renderPage = async () => {
       try {
-        console.log("[VIEWER] PAGE_RENDER_START");
         const page = await pdfDoc.getPage(pageNumber);
         if (!active) return;
         
@@ -145,14 +121,12 @@ export default function PdfViewer({ url }) {
         await renderTask.promise;
         
         if (active) {
-          console.log("[VIEWER] PAGE_RENDER_SUCCESS");
-          console.log("[VIEWER] VIEWER_READY");
           setIsInitialLoad(false);
         }
       } catch (err) {
         if (err.name === 'RenderingCancelledException') return;
         console.error("[VIEWER] ERROR:", err);
-        if (active) setError("Render Error: " + (err.message || String(err))); // FIX: DO NOT SWALLOW ERROR!
+        if (active) setError("Render Error: " + (err.message || String(err)));
       }
     };
     

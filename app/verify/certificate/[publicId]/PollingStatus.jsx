@@ -16,7 +16,6 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
 
     const poll = async () => {
       try {
-        // Use BFF proxy endpoint (server-side auth, no cookie needed)
         const res = await fetch(`/api/verify/certificate/${publicId}/status`);
         
         if (res.ok) {
@@ -28,11 +27,9 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
                 previewUrl: data.certificate.previewUrl,
                 downloadUrl: data.certificate.downloadUrl
               });
-              return;
+              return; // Stop polling
             }
           }
-        } else {
-          console.error("[PollingStatus] poll failed:", res.status);
         }
       } catch (err) {
         console.error("Polling error", err);
@@ -54,18 +51,6 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
     return () => clearTimeout(timeoutRef.current);
   }, [status, attempts, publicId]);
 
-  if (status === "PROCESSING") {
-    return (
-      <div className="flex flex-col items-center justify-center p-20 border border-border bg-muted/20">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="mt-6 text-lg font-medium text-foreground">Preparing your certificate...</p>
-        <p className="mt-2 text-sm text-muted-foreground text-center">
-          Securing authenticity artifact. This should take a few seconds.
-        </p>
-      </div>
-    );
-  }
-
   if (status === "FAILED") {
     return (
       <div className="flex flex-col items-center justify-center p-20 border border-border bg-destructive/10">
@@ -86,11 +71,13 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
     );
   }
 
-  if (status === "READY" && urls.previewUrl && urls.downloadUrl) {
-    return (
-      <div className="flex flex-col items-center space-y-8">
-        <PdfViewer url={urls.previewUrl} />
-        
+  // ALways show PdfViewer, even if URL is null (it will show its internal loading state)
+  // This removes the "double loading screen" issue!
+  return (
+    <div className="flex flex-col items-center space-y-8">
+      <PdfViewer url={urls.previewUrl} />
+      
+      {status === "READY" && urls.downloadUrl && (
         <a 
           href={urls.downloadUrl}
           download={`Eternal-Glory-Certificate-${publicId}.pdf`}
@@ -99,9 +86,7 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
           <Download className="mr-2 h-4 w-4" />
           Download Certificate
         </a>
-      </div>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 }
