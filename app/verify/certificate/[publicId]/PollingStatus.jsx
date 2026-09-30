@@ -16,15 +16,14 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
 
     const poll = async () => {
       try {
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL;
-        const res = await fetch(`${adminApiUrl}/certificates/${publicId}/status`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
+        // Use the BFF proxy endpoint (same origin, no CORS issues, no env var dependency)
+        const res = await fetch(`/api/verify/certificate/${publicId}/status`);
+        
+        console.log("[POLLING] status check #" + (attempts + 1), "HTTP:", res.status);
         
         if (res.ok) {
           const data = await res.json();
+          console.log("[POLLING] response:", JSON.stringify(data?.certificate?.status));
           if (data.certificate) {
             setStatus(data.certificate.status);
             if (data.certificate.status === "READY") {
@@ -35,29 +34,30 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
               return;
             }
           }
+        } else {
+          console.error("[POLLING] error:", res.status, await res.text());
         }
       } catch (err) {
-        console.error("Polling error", err);
+        console.error("[POLLING] fetch error:", err);
       }
 
       setAttempts(a => a + 1);
     };
 
-    // Lightweight polling with backoff: 1s, 2s, 3s, 5s, 5s...
+    // Polling with backoff: 2s, 3s, 5s, 5s, 5s...
     let delay = 5000;
-    if (attempts === 0) delay = 1000;
-    else if (attempts === 1) delay = 2000;
-    else if (attempts === 2) delay = 3000;
+    if (attempts === 0) delay = 2000;
+    else if (attempts === 1) delay = 3000;
     
-    // Stop polling after 12 attempts (~1 minute)
-    if (attempts < 12) {
+    // Stop polling after 24 attempts (~2 minutes)
+    if (attempts < 24) {
       timeoutRef.current = setTimeout(poll, delay);
     } else {
-      setStatus("FAILED"); // Timeout visually
+      setStatus("FAILED");
     }
 
     return () => clearTimeout(timeoutRef.current);
-  }, [status, attempts, publicId, token]);
+  }, [status, attempts, publicId]);
 
   if (status === "PROCESSING") {
     return (
