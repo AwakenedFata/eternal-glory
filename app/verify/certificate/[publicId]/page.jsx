@@ -1,61 +1,46 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { cookies } from "next/headers";
 import PollingStatus from "./PollingStatus";
 
 export const metadata = {
   referrer: 'no-referrer',
 };
 
-async function getCertificate(publicId, token) {
+async function getCertificate(publicId) {
   try {
-    const headers = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL;
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    
+    if (!adminApiUrl || !secret) {
+      console.error("[CertPage] Missing ADMIN_API_URL or INTERNAL_SERVICE_SECRET");
+      return null;
+    }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/certificates/${publicId}`, {
+    const res = await fetch(`${adminApiUrl}/certificates/${publicId}`, {
       cache: "no-store",
-      headers,
+      headers: {
+        "Authorization": `Bearer ${secret}`
+      },
     });
     
     if (!res.ok) {
       if (res.status === 404) return null;
       if (res.status === 403) return { error: "FORBIDDEN" };
-      throw new Error("Failed to fetch certificate");
+      throw new Error("Failed to fetch certificate: " + res.status);
     }
     
     return await res.json();
   } catch (err) {
-    console.error(err);
+    console.error("[CertPage] getCertificate error:", err);
     return null;
   }
 }
 
 export default async function CertificatePage({ params }) {
   const { publicId } = await params;
-  
-  const cookieStore = await cookies();
-  const claimsCookie = cookieStore.get("eg_claims")?.value;
-  let token = null;
-  
-  if (claimsCookie) {
-    try {
-      const claims = JSON.parse(claimsCookie);
-      for (const key in claims) {
-        if (claims[key].publicId === publicId) {
-          token = claims[key].token;
-          if (typeof claims[key] === 'string') {
-            token = claims[key];
-          }
-          break;
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse claims cookie");
-    }
-  }
 
-  const data = await getCertificate(publicId, token);
+  const data = await getCertificate(publicId);
 
   if (data?.error === "FORBIDDEN") {
     return (
@@ -112,7 +97,7 @@ export default async function CertificatePage({ params }) {
             </p>
           </div>
         ) : (
-          <PollingStatus publicId={publicId} initialStatus={status} initialPreviewUrl={previewUrl} initialDownloadUrl={downloadUrl} token={token} />
+          <PollingStatus publicId={publicId} initialStatus={status} initialPreviewUrl={previewUrl} initialDownloadUrl={downloadUrl} />
         )}
       </div>
     </main>

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function GET(req, { params }) {
   try {
@@ -8,45 +7,30 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Missing publicId" }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const claimsCookie = cookieStore.get("eg_claims")?.value;
-    let claims = {};
-    try {
-      if (claimsCookie) claims = JSON.parse(claimsCookie);
-    } catch (e) {
-      claims = {};
-    }
-
-    let token = null;
-    for (const key in claims) {
-      if (claims[key].publicId === publicId) {
-        token = claims[key].token;
-        break;
-      }
-    }
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized access to certificate status" }, { status: 403 });
-    }
-
     const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL;
     if (!adminApiUrl) {
       return NextResponse.json({ error: "Admin API URL not configured" }, { status: 500 });
     }
 
-    // Call Admin API securely Server-to-Server
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    if (!secret) {
+      return NextResponse.json({ error: "Service secret not configured" }, { status: 500 });
+    }
+
+    // Use INTERNAL_SERVICE_SECRET for server-to-server auth
+    // This is a trusted BFF route running on Vercel, not exposed to the browser
     const res = await fetch(`${adminApiUrl}/certificates/${publicId}/status`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${secret}`
       },
-      // Ensure we don't cache polling requests
       cache: "no-store"
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      return NextResponse.json({ error: "Admin API error", details: errorText }, { status: res.status });
+      console.error("[BFF Status] Admin API error:", res.status, errorText);
+      return NextResponse.json({ error: "Admin API error" }, { status: res.status });
     }
 
     const data = await res.json();
@@ -54,6 +38,6 @@ export async function GET(req, { params }) {
 
   } catch (error) {
     console.error("Status BFF error:", error);
-    return NextResponse.json({ error: "Internal server error", details: error?.message || String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

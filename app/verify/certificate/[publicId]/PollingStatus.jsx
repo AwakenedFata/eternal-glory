@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import PdfViewer from "./PdfViewer";
 import { Download } from "lucide-react";
 
-export default function PollingStatus({ publicId, initialStatus, initialPreviewUrl, initialDownloadUrl, token }) {
+export default function PollingStatus({ publicId, initialStatus, initialPreviewUrl, initialDownloadUrl }) {
   const [status, setStatus] = useState(initialStatus);
   const [urls, setUrls] = useState({ previewUrl: initialPreviewUrl || null, downloadUrl: initialDownloadUrl || null });
   const [attempts, setAttempts] = useState(0);
@@ -16,14 +16,11 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
 
     const poll = async () => {
       try {
-        // Use the BFF proxy endpoint (same origin, no CORS issues, no env var dependency)
+        // Use BFF proxy endpoint (server-side auth, no cookie needed)
         const res = await fetch(`/api/verify/certificate/${publicId}/status`);
-        
-        console.log("[POLLING] status check #" + (attempts + 1), "HTTP:", res.status);
         
         if (res.ok) {
           const data = await res.json();
-          console.log("[POLLING] response:", JSON.stringify(data?.certificate?.status));
           if (data.certificate) {
             setStatus(data.certificate.status);
             if (data.certificate.status === "READY") {
@@ -35,22 +32,23 @@ export default function PollingStatus({ publicId, initialStatus, initialPreviewU
             }
           }
         } else {
-          console.error("[POLLING] error:", res.status, await res.text());
+          console.error("[PollingStatus] poll failed:", res.status);
         }
       } catch (err) {
-        console.error("[POLLING] fetch error:", err);
+        console.error("Polling error", err);
       }
 
       setAttempts(a => a + 1);
     };
 
-    // Polling with backoff: 2s, 3s, 5s, 5s, 5s...
+    // Polling with backoff: 2s, 3s, 4s, 5s, 5s...
     let delay = 5000;
     if (attempts === 0) delay = 2000;
     else if (attempts === 1) delay = 3000;
+    else if (attempts === 2) delay = 4000;
     
-    // Stop polling after 24 attempts (~2 minutes)
-    if (attempts < 24) {
+    // Stop polling after 20 attempts (~1.5 minutes)
+    if (attempts < 20) {
       timeoutRef.current = setTimeout(poll, delay);
     } else {
       setStatus("FAILED");
