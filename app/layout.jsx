@@ -11,6 +11,7 @@ const anton = Anton({
 const manrope = Manrope({
   variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata = {
@@ -27,12 +28,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${anton.variable} ${manrope.variable}`}>
-      
-      <head>
-        <Script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" strategy="beforeInteractive" />
-      </head>
-      <body>{children}</body>
+    <html lang="en" className={`${anton.variable} ${manrope.variable}`} suppressHydrationWarning>
+      <body className="bg-[#ffffff] text-[#000000] antialiased selection:bg-[#000000] selection:text-[#ffffff]">
+        {children}
+        <Script
+          src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }

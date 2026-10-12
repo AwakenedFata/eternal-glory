@@ -26,8 +26,19 @@ export default function PdfViewer({ url }) {
         pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
         if (active) setPdfjsLib(pdfjs);
       } else {
-        // Retry if not yet loaded
-        if (active) setTimeout(checkPdfJs, 200);
+        if (!document.querySelector('script[src*="pdf.min.js"]')) {
+          const s = document.createElement("script");
+          s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+          s.onload = () => {
+            if (active && window.pdfjsLib) {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+              setPdfjsLib(window.pdfjsLib);
+            }
+          };
+          document.head.appendChild(s);
+        } else {
+          if (active) setTimeout(checkPdfJs, 100);
+        }
       }
     };
     

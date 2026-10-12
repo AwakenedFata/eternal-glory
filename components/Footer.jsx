@@ -7,13 +7,16 @@ export default function Footer() {
   const [activeSocials, setActiveSocials] = useState(socialMedias);
 
   useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_ADMIN_API_URL) return;
     fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/socials`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.data && data.data.length > 0) {
           const dbSocials = data.data;
-          const merged = socialMedias.map(staticSocial => {
-            const dbSocial = dbSocials.find(db => db.platform.toLowerCase() === staticSocial.name.toLowerCase());
+          const merged = socialMedias.map((staticSocial) => {
+            const dbSocial = dbSocials.find(
+              (db) => db.platform.toLowerCase() === staticSocial.name.toLowerCase()
+            );
             if (dbSocial) {
               return { ...staticSocial, url: dbSocial.url, sortOrder: dbSocial.sortOrder };
             }
@@ -26,14 +29,20 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-black text-white">
+    <footer className="bg-[#000000] text-[#ffffff]">
       <div className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 sm:py-16">
-        <div className="grid gap-10 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <div className="min-w-0">
-            <img src="/assets/whitelogo.png" alt="Eternal Glory" className="h-10 sm:h-12 w-auto" />
-            <p className="mt-3 text-sm text-white/70">Faith worn daily.</p>
+        <div className="flex flex-col items-center justify-between gap-10 md:flex-row md:items-center">
+          {/* Logo enlarged to match reference image */}
+          <div className="flex flex-col items-center md:items-start">
+            <img
+              src="/assets/whitelogo.png"
+              alt="Eternal Glory"
+              className="h-14 sm:h-16 md:h-20 w-auto"
+            />
           </div>
-          <div className="flex flex-wrap gap-3 sm:gap-4">
+
+          {/* Social Media Icons */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             {activeSocials.map((social) => (
               <a
                 key={social.name}
@@ -42,7 +51,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 aria-label={social.name}
                 title={social.name}
-                className="flex h-11 w-11 items-center justify-center border border-white/30 text-white transition-colors hover:border-white hover:bg-white hover:text-black"
+                className="flex h-11 w-11 items-center justify-center border border-[#ffffff]/25 text-[#ffffff] transition-all duration-300 hover:border-[#ffffff] hover:bg-[#ffffff] hover:text-[#000000] hover:scale-105"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -57,15 +66,16 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-white/20 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-white/60">
+        {/* Bottom Bar Divider and Copyright */}
+        <div className="mt-12 flex flex-col items-center gap-4 border-t border-[#ffffff]/15 pt-6 text-center sm:flex-row sm:justify-between sm:text-left">
+          <p className="text-xs text-[#ffffff]/60 font-manrope-regular">
             © 2026 Eternal Glory. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-xs text-white/60 hover:text-white">
+            <a href="#" className="text-xs text-[#ffffff]/60 hover:text-[#ffffff] transition-colors font-manrope-regular">
               Privacy
             </a>
-            <a href="#" className="text-xs text-white/60 hover:text-white">
+            <a href="#" className="text-xs text-[#ffffff]/60 hover:text-[#ffffff] transition-colors font-manrope-regular">
               Terms
             </a>
           </div>

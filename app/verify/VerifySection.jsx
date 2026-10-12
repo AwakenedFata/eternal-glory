@@ -1,144 +1,167 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import hangTagImage from "@/public/assets/hangtag.jpg";
-
-// STATES: IDLE, VERIFYING, INVALID, VERIFIED, ALREADY_VERIFIED, CERTIFICATE_PROCESSING, ERROR
 
 export default function VerifySection() {
   const router = useRouter();
-  const [serial, setSerial] = useState("");
+  const [serial, setSerial] = useState(["", "", "", "", "", ""]);
   const [status, setStatus] = useState("IDLE");
   const [notice, setNotice] = useState(null);
   const [certificateData, setCertificateData] = useState(null);
 
-  
+  const handleOtpChange = (index, value) => {
+    const sanitized = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (!sanitized && value !== "") return;
 
+    const newSerial = [...serial];
+    newSerial[index] = sanitized.slice(-1);
+    setSerial(newSerial);
+
+    if (sanitized && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !serial[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) {
+        prevInput.focus();
+        const newSerial = [...serial];
+        newSerial[index - 1] = "";
+        setSerial(newSerial);
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
+    if (!pasted) return;
+
+    const newSerial = [...serial];
+    for (let i = 0; i < 6; i++) {
+      newSerial[i] = pasted[i] || "";
+    }
+    setSerial(newSerial);
+
+    const targetIndex = Math.min(pasted.length, 5);
+    const targetInput = document.getElementById(`otp-${targetIndex}`);
+    if (targetInput) targetInput.focus();
+  };
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    if (serial.length !== 6) {
-      setNotice("Please enter all 6 digits.");
-      setStatus("INVALID");
+    const code = serial.join("");
+    if (code.length !== 6) {
+      setNotice("Please enter a complete 6-character serial code.");
       return;
     }
 
-    setStatus("VERIFYING");
+    setStatus("LOADING");
     setNotice(null);
-    setCertificateData(null);
 
     try {
-      const res = await fetch(`/api/verify`, {
+      const res = await fetch("/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: serial })
+        body: JSON.stringify({ serial: code }),
       });
+
       const data = await res.json();
 
-      if (data.result === "VERIFIED") {
-        setNotice(data.message);
-        setCertificateData(data.certificate);
-        
-        // IMMEDIATE REDIRECT for faster perceived performance
-        if (data.certificate?.status === "PROCESSING" || data.certificate?.status === "READY") {
-          router.push(`/verify/certificate/${data.certificate.publicId}`);
-          return;
-        } else {
-          setStatus("VERIFIED");
-        }
-      } else if (data.result === "ALREADY_VERIFIED") {
-        if (data.certificateAccess) {
-          setNotice(data.message);
-          setCertificateData(data.certificate);
-          // IMMEDIATE REDIRECT for already verified too
-          if (data.certificate?.publicId) {
-             router.push(`/verify/certificate/${data.certificate.publicId}`);
-             return;
-          }
-          setStatus("ALREADY_VERIFIED");
-        } else {
-          setNotice("This product is authentic, but the certificate has already been claimed.");
-          setStatus("ALREADY_CLAIMED");
-        }
-      } else if (data.result === "RATE_LIMITED") {
-        setNotice(data.message);
+      if (!res.ok) {
         setStatus("ERROR");
-      } else {
-        setNotice(data.details || data.error || data.message || "Serial number not found.");
-        setStatus("INVALID");
+        setNotice(data.error || "Verification failed. Please check your serial code.");
+        return;
       }
-      
+
+      const st = data.status || (data.data && data.data.status);
+      setStatus(st);
+
+      if (data.certificate?.publicId) {
+        router.push(`/verify/certificate/${data.certificate.publicId}`);
+        return;
+      }
+
+      if (st === "VERIFIED" || st === "ALREADY_VERIFIED") {
+        setNotice(data.message || "Your product is authentic!");
+        if (data.certificate) {
+          setCertificateData(data.certificate);
+        }
+      } else if (st === "CERTIFICATE_PROCESSING") {
+        setNotice("Your product is authentic! Preparing your certificate...");
+        if (data.certificate) {
+          setCertificateData(data.certificate);
+        }
+      } else {
+        setNotice(data.message || "Your product is authentic!");
+      }
     } catch (err) {
-      console.error(err);
-      setNotice("An error occurred. Please try again later.");
       setStatus("ERROR");
+      setNotice("Network error. Please try again.");
     }
   };
 
-  const handleSerialChange = (e) => {
-    setSerial(e.target.value.replace(/\D/g, "").slice(0, 6));
-    if (status !== "IDLE") {
-      setStatus("IDLE");
-      setNotice(null);
-      setCertificateData(null);
-    }
-  };
-
-  const isLoading = status === "VERIFYING";
-  const hasCertificate = certificateData?.publicId && (status === "VERIFIED" || status === "ALREADY_VERIFIED");
+  const isLoading = status === "LOADING";
+  const hasCertificate = certificateData?.publicId && status !== "CERTIFICATE_PROCESSING";
 
   return (
-    <section id="verify" className="scroll-mt-20 bg-gray-100">
-      <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 md:py-40">
-        <div className="grid items-center gap-14 md:grid-cols-2 md:gap-16 lg:gap-24">
-          <div className="min-w-0">
-            <h2 className="eg-display text-[clamp(2.25rem,8vw,4.5rem)] text-black">Verify your piece</h2>
-            <p className="mt-6 max-w-md text-base leading-relaxed text-black/60 sm:text-lg">
-              Enter the 6-digit serial number found on your Eternal Glory hang tag to verify your
-              product.
+    <section id="verify" className="scroll-mt-20 bg-[#f4f4f5] text-[#000000]">
+      <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 md:py-36">
+        <div className="grid gap-12 md:grid-cols-2 md:gap-16 lg:gap-24 items-center">
+          {/* Left Column: Center aligned on mobile, left aligned on desktop */}
+          <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left">
+            <h2 className="eg-display text-[clamp(2rem,6vw,4.75rem)] text-[#000000] leading-[0.95]">
+              VERIF YOUR PIECE
+            </h2>
+            <p className="mt-4 max-w-md text-sm sm:text-base leading-relaxed text-[#000000]/70 font-normal">
+              Enter the 6-digit serial number found on your Eternal Glory hang tag to verify your product.
             </p>
 
-            <form className="mt-12" onSubmit={handleVerify}>
-              <label htmlFor="serial" className="eg-eyebrow block text-black/70">
-                Serial number
+            <form onSubmit={handleVerify} className="mt-8 w-full flex flex-col items-center md:items-start">
+              <label className="block text-xs font-semibold uppercase tracking-[0.22em] text-[#000000]/70">
+                SERIAL NUMBER
               </label>
-              <input
-                id="serial"
-                inputMode="numeric"
-                autoComplete="off"
-                placeholder="000000"
-                maxLength={6}
-                value={serial}
-                onChange={handleSerialChange}
-                disabled={isLoading}
-                className="mt-4 h-16 w-full max-w-md border border-black/20 bg-white px-5 text-2xl tracking-[0.5em] text-black outline-none transition-colors placeholder:text-black/30 focus:border-black sm:h-20 sm:text-3xl disabled:opacity-50"
-              />
-              
-              {!hasCertificate && status !== "CERTIFICATE_PROCESSING" && (
+
+              <div className="mt-3 flex gap-2 sm:gap-3 justify-center md:justify-start" onPaste={handlePaste}>
+                {serial.map((char, index) => (
+                  <input
+                    key={index}
+                    id={`otp-${index}`}
+                    type="text"
+                    inputMode="text"
+                    maxLength={1}
+                    value={char}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    disabled={isLoading}
+                    className="h-12 w-11 sm:h-14 sm:w-13 border border-[#000000]/30 bg-[#ffffff] text-center text-lg sm:text-xl font-bold uppercase text-[#000000] focus:border-[#000000] focus:outline-none transition-colors"
+                  />
+                ))}
+              </div>
+
+              {!hasCertificate && (
                 <button
                   type="submit"
-                  disabled={isLoading || serial.length !== 6}
-                  className="mt-5 inline-flex h-14 w-full max-w-md items-center justify-center bg-black px-8 text-xs font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85 disabled:opacity-50"
+                  disabled={isLoading || serial.join("").length !== 6}
+                  className="mt-6 inline-flex h-14 w-full max-w-md items-center justify-center bg-[#000000] px-8 text-xs font-semibold uppercase tracking-[0.22em] text-[#ffffff] transition-all duration-300 hover:opacity-85 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                 >
-                  {isLoading ? "Verifying..." : "Verify product"}
+                  {isLoading ? "VERIFYING..." : "VERIFY PRODUCT"}
                 </button>
               )}
 
               {hasCertificate && (
                 <Link
                   href={`/verify/certificate/${certificateData.publicId}`}
-                  className="mt-5 inline-flex h-14 w-full max-w-md items-center justify-center bg-black px-8 text-xs font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85"
+                  className="mt-6 inline-flex h-14 w-full max-w-md items-center justify-center bg-[#000000] px-8 text-xs font-semibold uppercase tracking-[0.22em] text-[#ffffff] transition-all duration-300 hover:opacity-85 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   VIEW CERTIFICATE
                 </Link>
-              )}
-
-              {status === "CERTIFICATE_PROCESSING" && (
-                <div className="mt-5 inline-flex h-14 w-full max-w-md items-center justify-center bg-black/10 px-8 text-xs font-semibold uppercase tracking-[0.22em] text-black opacity-70">
-                  Preparing Certificate...
-                </div>
               )}
 
               {notice && (
@@ -148,22 +171,24 @@ export default function VerifySection() {
                   {status === "CERTIFICATE_PROCESSING" ? "Your product is verified as authentic. Your certificate is being prepared..." : notice}
                 </p>
               )}
-              <p className="mt-6 max-w-md text-sm leading-relaxed text-black/60">
+
+              <p className="mt-6 max-w-md text-sm leading-relaxed text-[#000000]/60 font-normal">
                 Your serial number can be found on the hang tag attached to your product.
               </p>
             </form>
           </div>
 
-          <div className="min-w-0">
+          {/* Right Column: Hang Tag Image */}
+          <div className="min-w-0 flex flex-col items-center">
             <img
               src={hangTagImage.src}
               alt="Eternal Glory hang tag showing the serial number"
               width={1200}
               height={1200}
               loading="lazy"
-              className="h-auto w-full object-cover grayscale"
+              className="h-auto w-full max-w-md object-cover grayscale transition-transform duration-500 hover:scale-[1.01]"
             />
-            <p className="mt-5 text-center text-sm uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="mt-5 text-center text-xs uppercase tracking-[0.18em] text-[#000000]/60 font-normal">
               Find the serial number on your hang tag.
             </p>
           </div>

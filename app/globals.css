@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Helvetica Black Condensed';
+  src: url('/fonts/HelveticaNeueLTStd-BlkCn.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 
 @source "../app";
@@ -9,87 +17,61 @@
 
 /*
  * ETERNAL GLORY design system — strictly monochrome.
- * Black / gray / white only. Editorial typography, generous space.
+ * Pure Black (#000000) / Pure White (#ffffff) / Gray only for verify section (#f4f4f5).
+ * Only 2 font families: Helvetica (Black Condensed) & Manrope.
  */
 
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-}
-
 :root {
-  --radius: 0.125rem;
-  --background: oklch(0.15 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.15 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.25 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.25 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.35 0 0);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.25 0 0);
-  --ring: oklch(0.8 0 0);
+  --radius: 0rem;
+  --background: #ffffff;
+  --foreground: #000000;
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --color-card: #ffffff;
+  --color-card-foreground: #000000;
+  --color-border: #000000;
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
-
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    background-color: #ffffff;
+    color: #000000;
   }
 
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: #ffffff;
+    color: #000000;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    font-family: var(--font-sans), "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 }
 
 @utility eg-display {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  line-height: 0.92;
+  font-family: 'Helvetica Black Condensed', "Helvetica Neue LT Std 97 Black Condensed", "Helvetica Neue Condensed Black", "Helvetica Condensed Black", "Helvetica Condensed", -apple-system, sans-serif;
+  font-weight: 900;
+  font-stretch: condensed;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
   text-transform: uppercase;
 }
 
 @utility eg-eyebrow {
+  font-family: var(--font-sans), "Manrope", sans-serif;
   font-size: 0.6875rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--color-muted-foreground);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+@utility font-manrope-medium {
+  font-family: var(--font-sans), "Manrope", sans-serif;
+  font-weight: 500;
+}
+
+@utility font-manrope-regular {
+  font-family: var(--font-sans), "Manrope", sans-serif;
+  font-weight: 400;
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Shopee Bag Handle -->
+  <path d="M72 68 C72 44 84 30 100 30 C116 30 128 44 128 68" stroke="#000000" stroke-width="12" stroke-linecap="round" fill="none" />
+  <!-- Bag Body -->
+  <path d="M46 66 L154 66 L142 174 L58 174 Z" fill="#000000" stroke="#000000" stroke-width="6" stroke-linejoin="round" />
+  <!-- Shopee S Mark -->
+  <path d="M116 94 C112 86 88 84 88 98 C88 114 114 112 114 128 C114 142 90 142 84 132" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>

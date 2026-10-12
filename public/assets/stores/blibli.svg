@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Cubes on Top -->
+  <rect x="72" y="32" width="24" height="24" rx="4" fill="#000000" />
+  <rect x="104" y="38" width="24" height="24" rx="4" fill="#000000" />
+  <!-- Bag Body -->
+  <path d="M52 70 L62 62 L86 70 L102 56 L118 70 L142 62 L152 70 L146 170 L58 170 Z" fill="#000000" />
+  <!-- Face -->
+  <circle cx="84" cy="112" r="6" fill="#ffffff" />
+  <circle cx="116" cy="112" r="6" fill="#ffffff" />
+  <path d="M84 132 C88 144 112 144 116 132" stroke="#ffffff" stroke-width="8" stroke-linecap="round" fill="none" />
+</svg>

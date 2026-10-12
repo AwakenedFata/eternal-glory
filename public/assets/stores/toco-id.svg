@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Solid Black Square -->
+  <rect x="25" y="25" width="150" height="150" rx="6" fill="#000000" />
+  <!-- 'toco' lowercase bold geometric text -->
+  <text x="100" y="112" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" letter-spacing="-1">toco</text>
+</svg>

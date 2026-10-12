@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Tokopedia Owl Body & Ears -->
+  <path d="M48 54 L72 74 L128 74 L152 54 L152 152 C152 163 143 172 132 172 L68 172 C57 172 48 163 48 152 Z" fill="#000000" />
+  <!-- Eyes -->
+  <circle cx="76" cy="110" r="22" fill="#ffffff" />
+  <circle cx="124" cy="110" r="22" fill="#ffffff" />
+  <circle cx="80" cy="110" r="11" fill="#000000" />
+  <circle cx="120" cy="110" r="11" fill="#000000" />
+  <!-- Beak -->
+  <polygon points="100,116 92,130 108,130" fill="#ffffff" />
+</svg>

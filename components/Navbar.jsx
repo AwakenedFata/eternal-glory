@@ -1,3 +1,5 @@
+"use client";
+
 import { navMenu } from "@/lib/navAndLink";
 import { useEffect, useState } from "react";
 
@@ -23,12 +25,15 @@ export default function Navbar() {
     return () => observer.disconnect();
   }, []);
 
-
   return (
-    <header className="sticky top-0 z-50 bg-black/90 backdrop-blur-sm text-white">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 sm:px-8 md:py-6">
-        <a href="#home" className="min-w-0 flex items-center" onClick={() => setOpen(false)}>
-          <img src="/assets/whitelogo.png" alt="Eternal Glory" className="h-10 md:h-12 w-auto" />
+    <header className="sticky top-0 z-50 bg-[#000000] text-[#ffffff] transition-colors duration-200">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 sm:px-8 md:py-5">
+        <a href="#home" className="flex items-center" onClick={() => setOpen(false)}>
+          <img
+            src="/assets/whitelogo.png"
+            alt="Eternal Glory"
+            className="h-12 sm:h-11 md:h-11 w-auto transition-transform duration-300 hover:scale-105"
+          />
         </a>
 
         <nav className="hidden shrink-0 items-center gap-8 md:flex lg:gap-12">
@@ -38,10 +43,10 @@ export default function Navbar() {
               href={item.href}
               onClick={() => setActive(item.href)}
               aria-current={active === item.href ? "true" : undefined}
-              className={`relative pb-1 text-xs uppercase tracking-[0.22em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:bg-white after:transition-all after:duration-300 ${
+              className={`relative pb-1 text-xs uppercase tracking-[0.22em] font-normal transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:bg-[#ffffff] after:transition-all after:duration-300 ${
                 active === item.href
-                  ? "font-bold text-white after:w-full"
-                  : "font-medium text-white/60 after:w-0 hover:text-white hover:after:w-full"
+                  ? "font-semibold text-[#ffffff] after:w-full"
+                  : "text-[#ffffff]/70 after:w-0 hover:text-[#ffffff] hover:after:w-full"
               }`}
             >
               {item.label}
@@ -58,12 +63,12 @@ export default function Navbar() {
         >
           <span className="relative block h-3 w-6">
             <span
-              className={`absolute left-0 block h-[1.5px] w-6 bg-white transition-transform ${
+              className={`absolute left-0 block h-[1.5px] w-6 bg-[#ffffff] transition-transform duration-300 ${
                 open ? "top-1.5 rotate-45" : "top-0"
               }`}
             />
             <span
-              className={`absolute left-0 block h-[1.5px] w-6 bg-white transition-transform ${
+              className={`absolute left-0 block h-[1.5px] w-6 bg-[#ffffff] transition-transform duration-300 ${
                 open ? "top-1.5 -rotate-45" : "top-3"
               }`}
             />
@@ -72,7 +77,7 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <nav className="border-t border-white/10 bg-black px-5 py-2 md:hidden">
+        <nav className="border-t border-[#ffffff]/15 bg-[#000000] px-5 py-4 md:hidden text-center">
           {navMenu.map((item) => (
             <a
               key={item.href}
@@ -81,10 +86,10 @@ export default function Navbar() {
                 setActive(item.href);
                 setOpen(false);
               }}
-              className={`block py-4 text-sm uppercase tracking-[0.22em] transition-colors ${
+              className={`block py-3 text-sm uppercase tracking-[0.22em] transition-colors ${
                 active === item.href
-                  ? "font-bold text-white underline decoration-[1.5px] underline-offset-4"
-                  : "font-medium text-white/60"
+                  ? "font-semibold text-[#ffffff] underline decoration-[1.5px] underline-offset-4"
+                  : "font-normal text-[#ffffff]/70 hover:text-[#ffffff]"
               }`}
             >
               {item.label}

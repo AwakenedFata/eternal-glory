@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Bag Handle -->
+  <path d="M72 64 C72 42 84 28 100 28 C116 28 128 42 128 64" stroke="#000000" stroke-width="12" stroke-linecap="round" fill="none" />
+  <!-- Bag Body -->
+  <path d="M48 64 L152 64 L142 174 L58 174 Z" fill="#000000" stroke="#000000" stroke-width="4" stroke-linejoin="round" />
+  <!-- TikTok Glyph -->
+  <path d="M96 92 V132 C96 138.6 90.6 144 84 144 C77.4 144 72 138.6 72 132 C72 125.4 77.4 120 84 120 C86.2 120 88.2 120.6 90 121.6 V92 H102 C103 100 110 106 118 107 V97 C112 96 108 92 106 82 H96 V92 Z" fill="#ffffff" />
+</svg>

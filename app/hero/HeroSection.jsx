@@ -2,44 +2,46 @@ import heroImage from '@/public/assets/hero.jpg';
 
 export default function HeroSection() {
   return (
-    <section id="home" className="scroll-mt-20 bg-white text-black">
+    <section id="home" className="scroll-mt-20 bg-[#ffffff] text-[#000000]">
       <div className="mx-auto grid max-w-[1440px] items-center gap-12 px-5 py-16 sm:px-8 sm:py-24 md:grid-cols-2 md:gap-16 md:py-32 lg:gap-24">
-        <div className="min-w-0">
-          <p className="eg-eyebrow text-black/50">Eternal Glory</p>
-          <h1 className="eg-display mt-6 text-[clamp(3rem,13vw,7.5rem)] text-black">
-            Faith
+        {/* Left Column: Center aligned on mobile, left aligned on desktop */}
+        <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left">
+          <p className="eg-eyebrow text-[#000000]/60">OFFICIAL STORE</p>
+          <h1 className="eg-display mt-6 text-[clamp(2.5rem,8vw,5.5rem)] text-[#000000] leading-[0.92]">
+            WEAR
             <br />
-            Worn
+            YOUR FAITH
             <br />
-            Daily.
+            EVERY DAY
           </h1>
-          <p className="mt-8 max-w-md text-base leading-relaxed text-black/70 sm:text-lg">
+          <p className="mt-8 max-w-md text-base leading-relaxed text-[#000000]/75 sm:text-lg font-normal">
             A Christian clothing brand created to express faith through everyday clothing.
           </p>
 
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
+          <div className="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4 md:justify-start">
             <a
               href="#verify"
-              className="inline-flex h-14 items-center justify-center bg-black px-8 text-xs font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85"
+              className="inline-flex h-14 w-full sm:w-auto items-center justify-center bg-[#000000] px-8 text-xs font-semibold uppercase tracking-[0.22em] text-[#ffffff] transition-all duration-300 hover:opacity-85 hover:scale-[1.02] active:scale-[0.98]"
             >
               Verify your piece
             </a>
             <a
               href="#shop"
-              className="inline-flex h-14 items-center justify-center border border-black px-8 text-xs font-semibold uppercase tracking-[0.22em] text-black transition-colors hover:bg-black hover:text-white"
+              className="inline-flex h-14 w-full sm:w-auto items-center justify-center border border-[#000000] bg-[#ffffff] px-8 text-xs font-semibold uppercase tracking-[0.22em] text-[#000000] transition-all duration-300 hover:bg-[#000000] hover:text-[#ffffff] hover:scale-[1.02] active:scale-[0.98]"
             >
               Shop Eternal Glory
             </a>
           </div>
         </div>
 
-        <div className="min-w-0">
+        {/* Right Column: Hero Image */}
+        <div className="min-w-0 flex justify-center">
           <img
             src={heroImage.src}
             alt="Model wearing an Eternal Glory hoodie"
             width={1200}
             height={1504}
-            className="h-auto w-full object-cover grayscale"
+            className="h-auto w-full max-w-lg md:max-w-none object-cover grayscale transition-transform duration-500 hover:scale-[1.01]"
           />
         </div>
       </div>
