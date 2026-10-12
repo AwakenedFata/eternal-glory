@@ -37,7 +37,7 @@ export default function Footer() {
             <img
               src="/assets/whitelogo.png"
               alt="Eternal Glory"
-              className="h-14 sm:h-16 md:h-20 w-auto"
+              className="h-9 sm:h-10 md:h-11 w-auto"
             />
           </div>
 

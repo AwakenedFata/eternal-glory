@@ -32,7 +32,7 @@ export default function Navbar() {
           <img
             src="/assets/whitelogo.png"
             alt="Eternal Glory"
-            className="h-12 sm:h-11 md:h-11 w-auto transition-transform duration-300 hover:scale-105"
+            className="h-9 sm:h-10 md:h-11 w-auto transition-transform duration-300 hover:scale-105"
           />
         </a>
 
