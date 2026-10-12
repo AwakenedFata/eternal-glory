@@ -76,8 +76,24 @@ export default function Navbar() {
         </button>
       </div>
 
-      {open && (
-        <nav className="border-t border-[#ffffff]/15 bg-[#000000] px-5 py-4 md:hidden text-center">
+      {/* Mobile Backdrop Overlay (click outside to close) */}
+      <div
+        onClick={() => setOpen(false)}
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-xs transition-opacity duration-300 md:hidden ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Mobile Dropdown Menu Floating Overlay (does not push page down) */}
+      <nav
+        className={`absolute top-[calc(100%-1px)] left-0 right-0 w-full z-50 border-t-0 border-b border-[#ffffff]/15 bg-[#000000]/95 backdrop-blur-md px-5 py-5 text-center shadow-2xl transition-all duration-300 ease-out md:hidden ${
+          open
+            ? "opacity-100 translate-y-0 pointer-events-auto visible"
+            : "opacity-0 -translate-y-2 pointer-events-none invisible"
+        }`}
+      >
+        <div className="flex flex-col space-y-1">
           {navMenu.map((item) => (
             <a
               key={item.href}
@@ -86,7 +102,7 @@ export default function Navbar() {
                 setActive(item.href);
                 setOpen(false);
               }}
-              className={`block py-3 text-sm uppercase tracking-[0.22em] transition-colors ${
+              className={`block py-3 text-xs uppercase tracking-[0.24em] transition-all duration-200 active:scale-95 ${
                 active === item.href
                   ? "font-semibold text-[#ffffff] underline decoration-[1.5px] underline-offset-4"
                   : "font-normal text-[#ffffff]/70 hover:text-[#ffffff]"
@@ -95,8 +111,8 @@ export default function Navbar() {
               {item.label}
             </a>
           ))}
-        </nav>
-      )}
+        </div>
+      </nav>
     </header>
   );
 }
