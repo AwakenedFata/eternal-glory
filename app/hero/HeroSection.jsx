@@ -7,7 +7,7 @@ export default function HeroSection() {
         {/* Left Column: Center aligned on mobile, left aligned on desktop */}
         <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left">
           <p className="eg-eyebrow text-[#000000]/60 eg-reveal">OFFICIAL STORE</p>
-          <h1 className="eg-display mt-6 text-[clamp(2.5rem,8vw,5.5rem)] text-[#000000] leading-[0.92] eg-reveal eg-delay-1">
+          <h1 className="eg-display mt-6 text-[clamp(2.875rem,8.5vw,5.75rem)] md:text-[clamp(2.5rem,8vw,5.5rem)] text-[#000000] leading-[0.92] eg-reveal eg-delay-1">
             WEAR
             <br />
             YOUR FAITH
