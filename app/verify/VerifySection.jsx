@@ -116,7 +116,7 @@ export default function VerifySection() {
         <div className="grid gap-12 md:grid-cols-2 md:gap-16 lg:gap-24 items-center">
           {/* Left Column: Center aligned on mobile, left aligned on desktop */}
           <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left eg-reveal">
-            <h2 className="eg-display text-[clamp(2.875rem,8.5vw,5.75rem)] md:text-[clamp(2rem,6vw,4.75rem)] text-[#000000] leading-[0.92] md:leading-[0.95]">
+            <h2 className="eg-display text-[clamp(4rem,8.5vw,5.75rem)] md:text-[clamp(2rem,6vw,4.75rem)] text-[#000000] leading-[0.92] md:leading-[0.95]">
               VERIFY
               <br />
               YOUR PIECE
