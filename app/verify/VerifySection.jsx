@@ -117,7 +117,9 @@ export default function VerifySection() {
           {/* Left Column: Center aligned on mobile, left aligned on desktop */}
           <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left eg-reveal">
             <h2 className="eg-display text-[clamp(2.875rem,8.5vw,5.75rem)] md:text-[clamp(2rem,6vw,4.75rem)] text-[#000000] leading-[0.92] md:leading-[0.95]">
-              VERIFY YOUR PIECE
+              VERIFY
+              <br />
+              YOUR PIECE
             </h2>
             <p className="mt-4 max-w-md text-sm sm:text-base leading-relaxed text-[#000000]/70 font-normal">
               Enter the 6-digit serial number found on your{" "}
