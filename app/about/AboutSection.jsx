@@ -19,7 +19,7 @@ export default function AboutSection() {
 
           {/* Right Column: Description with Manrope Regular, vertically centered with zero top offset */}
           <div className="min-w-0 flex flex-col justify-center eg-reveal eg-delay-2">
-            <p className="text-justify text-base sm:text-lg md:text-xl leading-relaxed text-[#000000] font-normal">
+            <p className="text-justify text-base sm:text-lg md:text-xl leading-relaxed text-[#000000] font-normal px-4 sm:px-6 md:px-0">
               Eternal Glory is a Christian clothing brand established in 2026, created to bring faith
               into everyday life through simple and meaningful designs that can be worn with purpose,
               expressed with confidence, and become part of the moments that shape our daily lives.
