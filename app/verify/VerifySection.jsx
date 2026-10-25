@@ -121,7 +121,7 @@ export default function VerifySection() {
               <br />
               YOUR PIECE
             </h2>
-            <p className="mt-4 max-w-md text-sm sm:text-base leading-relaxed text-[#000000]/70 font-normal">
+            <p className="mt-8 max-w-md text-base leading-relaxed text-[#000000]/75 sm:text-lg font-normal eg-reveal eg-delay-2">
               Enter the 6-digit serial number found on your{" "}
               <br className="sm:hidden" />
               Eternal Glory hang tag to verify your product.
@@ -169,9 +169,8 @@ export default function VerifySection() {
               )}
 
               {notice && (
-                <p className={`mt-4 text-sm font-medium ${
-                  (status === 'VERIFIED' || status === 'ALREADY_VERIFIED' || status === 'CERTIFICATE_PROCESSING' || status === 'ALREADY_CLAIMED') ? 'text-green-600' : 'text-red-600'
-                }`} role="status">
+                <p className={`mt-4 text-sm font-medium ${(status === 'VERIFIED' || status === 'ALREADY_VERIFIED' || status === 'CERTIFICATE_PROCESSING' || status === 'ALREADY_CLAIMED') ? 'text-green-600' : 'text-red-600'
+                  }`} role="status">
                   {status === "CERTIFICATE_PROCESSING" ? "Your product is verified as authentic. Your certificate is being prepared..." : notice}
                 </p>
               )}
