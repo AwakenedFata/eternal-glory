@@ -29,7 +29,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-[#000000] text-[#ffffff]">
+    <footer className="bg-[#000000] text-[#ffffff] eg-reveal">
       <div className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 sm:py-16">
         <div className="flex flex-col items-center justify-between gap-10 md:flex-row md:items-center">
           {/* Logo enlarged to match reference image */}
@@ -51,7 +51,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 aria-label={social.name}
                 title={social.name}
-                className="flex h-11 w-11 items-center justify-center border border-[#ffffff]/25 text-[#ffffff] transition-all duration-300 hover:border-[#ffffff] hover:bg-[#ffffff] hover:text-[#000000] hover:scale-105"
+                className="flex h-11 w-11 items-center justify-center border border-[#ffffff]/25 text-[#ffffff] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-[#ffffff] hover:bg-[#ffffff] hover:text-[#000000] hover:scale-110 active:scale-90 hover:shadow-[0_8px_20px_rgba(255,255,255,0.18)]"
               >
                 <svg
                   viewBox="0 0 24 24"

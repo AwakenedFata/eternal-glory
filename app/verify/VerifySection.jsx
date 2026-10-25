@@ -115,12 +115,14 @@ export default function VerifySection() {
       <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 md:py-36">
         <div className="grid gap-12 md:grid-cols-2 md:gap-16 lg:gap-24 items-center">
           {/* Left Column: Center aligned on mobile, left aligned on desktop */}
-          <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left">
+          <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left eg-reveal">
             <h2 className="eg-display text-[clamp(2rem,6vw,4.75rem)] text-[#000000] leading-[0.95]">
               VERIF YOUR PIECE
             </h2>
             <p className="mt-4 max-w-md text-sm sm:text-base leading-relaxed text-[#000000]/70 font-normal">
-              Enter the 6-digit serial number found on your Eternal Glory hang tag to verify your product.
+              Enter the 6-digit serial number found on your{" "}
+              <br className="sm:hidden" />
+              Eternal Glory hang tag to verify your product.
             </p>
 
             <form onSubmit={handleVerify} className="mt-8 w-full flex flex-col items-center md:items-start">
@@ -140,7 +142,7 @@ export default function VerifySection() {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     disabled={isLoading}
-                    className="h-12 w-11 sm:h-14 sm:w-13 border border-[#000000]/30 bg-[#ffffff] text-center text-lg sm:text-xl font-bold uppercase text-[#000000] focus:border-[#000000] focus:outline-none transition-colors"
+                    className="h-12 w-11 sm:h-14 sm:w-13 border border-[#000000]/30 bg-[#ffffff] text-center text-lg sm:text-xl font-bold uppercase text-[#000000] transition-all duration-200 ease-out hover:border-[#000000] focus:border-[#000000] focus:ring-2 focus:ring-[#000000]/15 focus:scale-[1.06] focus:shadow-[0_6px_16px_rgba(0,0,0,0.08)] active:scale-95 outline-none"
                   />
                 ))}
               </div>
@@ -149,7 +151,7 @@ export default function VerifySection() {
                 <button
                   type="submit"
                   disabled={isLoading || serial.join("").length !== 6}
-                  className="mt-6 inline-flex h-14 w-full max-w-md items-center justify-center bg-[#000000] px-8 text-xs font-semibold uppercase tracking-[0.22em] text-[#ffffff] transition-all duration-300 hover:opacity-85 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  className="mt-6 inline-flex h-14 w-full max-w-md items-center justify-center bg-[#000000] px-8 text-xs font-semibold uppercase tracking-[0.22em] text-[#ffffff] eg-btn-spring hover:shadow-[0_12px_24px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {isLoading ? "VERIFYING..." : "VERIFY PRODUCT"}
                 </button>

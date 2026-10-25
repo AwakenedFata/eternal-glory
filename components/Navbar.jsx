@@ -6,6 +6,16 @@ import { useEffect, useState } from "react";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("#home");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 15);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const sections = navMenu.map((item) =>
@@ -26,9 +36,15 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-[#000000] text-[#ffffff] transition-colors duration-200">
-      {/* Header bar: relative z-50 bg-[#000000] so it stays strictly above backdrop overlay */}
-      <div className="relative z-50 bg-[#000000]">
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ease-out ${
+        scrolled
+          ? "bg-[#000000]/85 backdrop-blur-xl border-b border-[#ffffff]/10 shadow-[0_12px_28px_rgba(0,0,0,0.5)]"
+          : "bg-[#000000] border-b border-transparent"
+      } text-[#ffffff]`}
+    >
+      {/* Header bar: relative z-50 so it stays strictly above backdrop overlay */}
+      <div className={`relative z-50 transition-colors duration-300 ${open ? "bg-[#000000]" : scrolled ? "bg-transparent" : "bg-[#000000]"}`}>
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 sm:px-8 md:py-5">
           <a href="#home" className="flex items-center" onClick={() => setOpen(false)}>
             <img
@@ -45,7 +61,7 @@ export default function Navbar() {
                 href={item.href}
                 onClick={() => setActive(item.href)}
                 aria-current={active === item.href ? "true" : undefined}
-                className={`relative pb-1 text-xs uppercase tracking-[0.22em] font-normal transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:bg-[#ffffff] after:transition-all after:duration-300 ${
+                className={`relative pb-1 text-xs uppercase tracking-[0.22em] font-normal transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:bg-[#ffffff] after:transition-all after:duration-300 ${
                   active === item.href
                     ? "font-semibold text-[#ffffff] after:w-full"
                     : "text-[#ffffff]/70 after:w-0 hover:text-[#ffffff] hover:after:w-full"
@@ -61,7 +77,7 @@ export default function Navbar() {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center md:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center md:hidden transition-transform duration-200 active:scale-90"
           >
             <span className="relative block h-3 w-6">
               <span
