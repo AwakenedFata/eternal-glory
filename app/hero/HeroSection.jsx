@@ -15,7 +15,9 @@ export default function HeroSection() {
             EVERY DAY
           </h1>
           <p className="mt-8 max-w-md text-base leading-relaxed text-[#000000]/75 sm:text-lg font-normal eg-reveal eg-delay-2">
-            A Christian clothing brand created to express faith through everyday clothing.
+            A Christian clothing brand created
+            <br />
+            to express faith through everyday clothing.
           </p>
 
           <div className="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:gap-4 md:items-center md:justify-center lg:w-auto lg:flex-row lg:items-start lg:justify-start eg-reveal eg-delay-3">
